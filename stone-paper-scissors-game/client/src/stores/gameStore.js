@@ -1,57 +1,221 @@
-import { writable } from 'svelte/store';
+import { writable, derived } from 'svelte/store';
+import socketClient from '../utils/socketClient.js';
 
+// Game store combining socket client stores with additional game logic
 export const gameStore = writable({
-    players: [],
-    currentPlayer: null,
-    choices: {
-        player1: null,
-        player2: null
-    },
-    scores: {
-        player1: 0,
-        player2: 0
-    },
-    gameStatus: 'waiting', // 'waiting', 'playing', 'finished'
-    winner: null
+  currentView: 'lobby', // 'lobby', 'game', 'waiting'
+  playerName: '',
+  isInGame: false,
+  selectedChoice: null,
+  hasSubmittedChoice: false,
+  showResult: false,
+  connectionStatus: 'disconnected' // 'disconnected', 'connecting', 'connected'
 });
 
-export const setPlayers = (players) => {
+// Reactive stores from socket client
+export const connected = socketClient.stores.connected;
+export const error = socketClient.stores.error;
+export const gameState = socketClient.stores.gameState;
+export const playerInfo = socketClient.stores.playerInfo;
+export const gamesList = socketClient.stores.gamesList;
+export const roundResult = socketClient.stores.roundResult;
+export const gameFinished = socketClient.stores.gameFinished;
+
+// Derived stores for computed values
+export const isMyTurn = derived(
+  [gameState, playerInfo],
+  ([$gameState, $playerInfo]) => {
+    if (!$gameState || !$playerInfo || $gameState.status !== 'playing') {
+      return false;
+    }
+    
+    const myChoice = $gameState.player1?.id === $playerInfo.playerId 
+      ? $gameState.player1.choice 
+      : $gameState.player2?.choice;
+    
+    return myChoice === null;
+  }
+);
+
+export const opponent = derived(
+  [gameState, playerInfo],
+  ([$gameState, $playerInfo]) => {
+    if (!$gameState || !$playerInfo) {
+      return null;
+    }
+    
+    return $gameState.player1?.id === $playerInfo.playerId 
+      ? $gameState.player2 
+      : $gameState.player1;
+  }
+);
+
+export const myPlayer = derived(
+  [gameState, playerInfo],
+  ([$gameState, $playerInfo]) => {
+    if (!$gameState || !$playerInfo) {
+      return null;
+    }
+    
+    return $gameState.player1?.id === $playerInfo.playerId 
+      ? $gameState.player1 
+      : $gameState.player2;
+  }
+);
+
+export const canMakeMove = derived(
+  [gameState, isMyTurn, gameStore],
+  ([$gameState, $isMyTurn, $gameStore]) => {
+    return $gameState?.status === 'playing' && 
+           $isMyTurn && 
+           !$gameStore.hasSubmittedChoice;
+  }
+);
+
+// Game actions
+export const gameActions = {
+  setPlayerName: (name) => {
+    gameStore.update(store => ({ ...store, playerName: name }));
+  },
+  
+  setCurrentView: (view) => {
+    gameStore.update(store => ({ ...store, currentView: view }));
+  },
+  
+  connectToServer: () => {
+    gameStore.update(store => ({ ...store, connectionStatus: 'connecting' }));
+    socketClient.connect();
+  },
+  
+  joinLobby: (playerName) => {
+    socketClient.joinLobby(playerName);
+    gameStore.update(store => ({ 
+      ...store, 
+      playerName,
+      currentView: 'lobby' 
+    }));
+  },
+  
+  createGame: () => {
     gameStore.update(store => {
-        return { ...store, players };
+      socketClient.createGame(store.playerName);
+      return { 
+        ...store, 
+        currentView: 'waiting',
+        isInGame: true 
+      };
     });
+  },
+  
+  joinGame: (gameId) => {
+    gameStore.update(store => {
+      socketClient.joinGame(gameId, store.playerName);
+      return { 
+        ...store, 
+        currentView: 'game',
+        isInGame: true 
+      };
+    });
+  },
+  
+  quickJoin: () => {
+    gameStore.update(store => {
+      socketClient.quickJoin(store.playerName);
+      return { 
+        ...store, 
+        currentView: 'waiting',
+        isInGame: true 
+      };
+    });
+  },
+  
+  makeMove: (choice) => {
+    gameStore.update(store => {
+      if (store.hasSubmittedChoice) return store;
+      
+      socketClient.makeMove(choice);
+      return { 
+        ...store, 
+        selectedChoice: choice,
+        hasSubmittedChoice: true
+      };
+    });
+  },
+  
+  resetGame: () => {
+    socketClient.resetGame();
+    gameStore.update(store => ({ 
+      ...store, 
+      selectedChoice: null,
+      hasSubmittedChoice: false,
+      showResult: false
+    }));
+  },
+  
+  leaveGame: () => {
+    socketClient.leaveGame();
+    gameStore.update(store => ({ 
+      ...store, 
+      currentView: 'lobby',
+      isInGame: false,
+      selectedChoice: null,
+      hasSubmittedChoice: false,
+      showResult: false
+    }));
+  },
+  
+  clearChoice: () => {
+    gameStore.update(store => ({ 
+      ...store, 
+      selectedChoice: null,
+      hasSubmittedChoice: false
+    }));
+  },
+  
+  disconnect: () => {
+    socketClient.disconnect();
+    gameStore.update(store => ({ 
+      ...store, 
+      currentView: 'lobby',
+      isInGame: false,
+      selectedChoice: null,
+      hasSubmittedChoice: false,
+      showResult: false,
+      connectionStatus: 'disconnected'
+    }));
+  }
 };
 
-export const setCurrentPlayer = (player) => {
-    gameStore.update(store => {
-        return { ...store, currentPlayer: player };
-    });
-};
+// Subscribe to connection status
+connected.subscribe(isConnected => {
+  gameStore.update(store => ({ 
+    ...store, 
+    connectionStatus: isConnected ? 'connected' : 'disconnected' 
+  }));
+});
 
-export const makeChoice = (player, choice) => {
+// Subscribe to game state changes to reset choice state for new rounds
+gameState.subscribe($gameState => {
+  if ($gameState && $gameState.status === 'playing') {
     gameStore.update(store => {
-        store.choices[player] = choice;
-        return { ...store };
+      // If both players have null choices, it's a new round
+      if ((!$gameState.player1.choice && !$gameState.player2?.choice) || 
+          ($gameState.round > 1 && !store.hasSubmittedChoice)) {
+        return {
+          ...store,
+          selectedChoice: null,
+          hasSubmittedChoice: false,
+          showResult: false
+        };
+      }
+      return store;
     });
-};
+  }
+});
 
-export const resetChoices = () => {
-    gameStore.update(store => {
-        return { ...store, choices: { player1: null, player2: null }, winner: null };
-    });
-};
-
-export const updateScores = (winner) => {
-    gameStore.update(store => {
-        if (winner) {
-            store.scores[winner]++;
-            store.winner = winner;
-        }
-        return { ...store };
-    });
-};
-
-export const setGameStatus = (status) => {
-    gameStore.update(store => {
-        return { ...store, gameStatus: status };
-    });
-};
+// Subscribe to round results
+roundResult.subscribe($roundResult => {
+  if ($roundResult) {
+    gameStore.update(store => ({ ...store, showResult: true }));
+  }
+});
