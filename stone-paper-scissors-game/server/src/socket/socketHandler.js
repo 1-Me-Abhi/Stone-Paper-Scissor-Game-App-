@@ -1,4 +1,5 @@
 const GameController = require('../controllers/gameController');
+const { AVATARS } = require('../utils/constants');
 
 class SocketHandler {
   constructor(io) {
@@ -17,12 +18,24 @@ class SocketHandler {
       console.log(`Player ${socket.id} connected`);
 
       // Player joins the lobby
-      socket.on('join-lobby', (playerName) => {
+      socket.on('join-lobby', (data) => {
+        const playerName = typeof data === 'string' ? data : data.playerName;
+        const avatar = data.avatar || '🎮';
+        
         socket.playerName = playerName;
+        socket.playerAvatar = avatar;
+        
+        // Create or get player profile
+        this.gameController.getOrCreatePlayer(socket.id, playerName, avatar);
+        
         socket.emit('joined-lobby', {
           playerId: socket.id,
-          playerName: playerName
+          playerName: playerName,
+          avatar: avatar
         });
+        
+        // Send available avatars
+        socket.emit('available-avatars', AVATARS);
         
         // Send available games list
         const gamesList = this.gameController.getGamesList();
@@ -33,7 +46,8 @@ class SocketHandler {
       socket.on('create-game', (data) => {
         try {
           const playerName = data.playerName || socket.playerName || 'Player';
-          const game = this.gameController.createGame(socket.id, playerName);
+          const avatar = data.avatar || socket.playerAvatar || '🎮';
+          const game = this.gameController.createGame(socket.id, playerName, avatar);
           
           socket.join(game.id);
           socket.gameId = game.id;
@@ -56,7 +70,8 @@ class SocketHandler {
         try {
           const { gameId } = data;
           const playerName = data.playerName || socket.playerName || 'Player';
-          const game = this.gameController.joinGame(gameId, socket.id, playerName);
+          const avatar = data.avatar || socket.playerAvatar || '🎮';
+          const game = this.gameController.joinGame(gameId, socket.id, playerName, avatar);
           
           socket.join(gameId);
           socket.gameId = gameId;
@@ -78,11 +93,12 @@ class SocketHandler {
       socket.on('quick-join', (data) => {
         try {
           const playerName = data.playerName || socket.playerName || 'Player';
+          const avatar = data.avatar || socket.playerAvatar || '🎮';
           let game = this.gameController.findAvailableGame();
           
           if (game) {
             // Join existing game
-            this.gameController.joinGame(game.id, socket.id, playerName);
+            this.gameController.joinGame(game.id, socket.id, playerName, avatar);
             socket.join(game.id);
             socket.gameId = game.id;
             
@@ -92,7 +108,7 @@ class SocketHandler {
             });
           } else {
             // Create new game
-            game = this.gameController.createGame(socket.id, playerName);
+            game = this.gameController.createGame(socket.id, playerName, avatar);
             socket.join(game.id);
             socket.gameId = game.id;
             
@@ -114,7 +130,9 @@ class SocketHandler {
       socket.on('make-move', (data) => {
         try {
           const { choice } = data;
+          console.log(`Player ${socket.id} made move: ${choice}`);
           const game = this.gameController.makeMove(socket.id, choice);
+          console.log(`Game state after move - P1: ${game.player1.choice}, P2: ${game.player2?.choice}`);
           
           // Send updated game state to both players
           if (game.player1) {
@@ -130,25 +148,39 @@ class SocketHandler {
           
           // If both players have made their moves, send round result
           if (game.player1.choice && game.player2.choice) {
+            console.log(`Both players made moves! Winner: ${game.roundWinner}`);
             setTimeout(() => {
               this.io.to(game.id).emit('round-result', {
                 gameState: game.getGameState(),
                 roundWinner: game.roundWinner
               });
+              console.log('Sent round-result to room:', game.id);
               
               // If game is finished, send final result
               if (game.status === 'finished') {
+                // Save game to history
+                this.gameController.saveGameToHistory(game);
+                
                 setTimeout(() => {
                   this.io.to(game.id).emit('game-finished', {
                     gameState: game.getGameState(),
                     winner: game.winner
                   });
                 }, 2000);
+              } else {
+                // Send next round state after 3 seconds
+                setTimeout(() => {
+                  this.io.to(game.id).emit('game-update', {
+                    gameState: game.getGameState()
+                  });
+                  console.log('Next round started for game:', game.id);
+                }, 3000);
               }
             }, 1000);
           }
           
         } catch (error) {
+          console.error('Error in make-move:', error);
           socket.emit('error', { message: error.message });
         }
       });
@@ -163,6 +195,45 @@ class SocketHandler {
               gameState: game.getGameState()
             });
           }
+        } catch (error) {
+          socket.emit('error', { message: error.message });
+        }
+      });
+
+      // Update avatar
+      socket.on('update-avatar', (data) => {
+        try {
+          const { avatar } = data;
+          socket.playerAvatar = avatar;
+          const player = this.gameController.updatePlayerAvatar(socket.id, avatar);
+          
+          if (player) {
+            socket.emit('avatar-updated', {
+              avatar: avatar,
+              profile: player.getProfile()
+            });
+          }
+        } catch (error) {
+          socket.emit('error', { message: error.message });
+        }
+      });
+
+      // Get player profile
+      socket.on('get-profile', () => {
+        try {
+          const profile = this.gameController.getPlayerProfile(socket.id);
+          socket.emit('profile-data', profile);
+        } catch (error) {
+          socket.emit('error', { message: error.message });
+        }
+      });
+
+      // Get player game history
+      socket.on('get-history', (data) => {
+        try {
+          const limit = data?.limit || 10;
+          const history = this.gameController.getPlayerHistory(socket.id, limit);
+          socket.emit('history-data', history);
         } catch (error) {
           socket.emit('error', { message: error.message });
         }

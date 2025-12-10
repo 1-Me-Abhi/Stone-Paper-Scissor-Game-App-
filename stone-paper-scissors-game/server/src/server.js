@@ -4,26 +4,42 @@ const { Server } = require('socket.io');
 const path = require('path');
 const SocketHandler = require('./socket/socketHandler');
 
+// Load environment variables
+require('dotenv').config();
+
+// Environment configuration
+const PORT = process.env.PORT || 3001;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+
 const app = express();
 const server = http.createServer(app);
+
+// Configure CORS based on environment
+const allowedOrigins = NODE_ENV === 'production' 
+  ? [process.env.CLIENT_URL, `http://localhost:${PORT}`]
+  : [CLIENT_URL, 'http://localhost:5173', 'http://localhost:3001'];
+
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Vite default port
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true
   }
 });
 
-const PORT = process.env.PORT || 3001;
-
 // Middleware
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
+
+// Serve static files from client build
 app.use(express.static(path.join(__dirname, '../../client/dist')));
 
 // CORS middleware for REST API
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Credentials', true);
@@ -57,21 +73,21 @@ app.get('/favicon.ico', (req, res) => {
 // Initialize socket handling
 new SocketHandler(io);
 
-// Serve the client app for any non-API routes
+// Serve the client app for any non-API routes (SPA fallback)
 app.get('*', (req, res) => {
   // Skip favicon requests
   if (req.path === '/favicon.ico') {
     return res.status(204).end();
   }
   
-  // Serve index.html for all other routes
-  const indexPath = path.join(__dirname, '../public/index.html');
+  // Serve index.html for all other routes (SPA routing)
+  const indexPath = path.join(__dirname, '../../client/dist/index.html');
   if (require('fs').existsSync(indexPath)) {
     res.sendFile(indexPath);
   } else {
     res.status(404).json({ 
       error: 'Game client not found', 
-      message: 'Please make sure the client is built and available' 
+      message: 'Please build the client first: cd client && npm run build' 
     });
   }
 });
@@ -88,8 +104,10 @@ app.use((err, req, res, next) => {
 // Start server
 server.listen(PORT, () => {
   console.log(`🎮 Stone Paper Scissors Server running on port ${PORT}`);
-  console.log(`🌐 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`📦 Environment: ${NODE_ENV}`);
+  console.log(`🌐 Server URL: http://localhost:${PORT}`);
   console.log(`🔗 Socket.IO server ready for connections`);
+  console.log(`✅ Health check: http://localhost:${PORT}/api/health`);
 });
 
 // Graceful shutdown

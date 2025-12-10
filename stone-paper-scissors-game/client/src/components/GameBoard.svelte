@@ -89,7 +89,7 @@
           {/each}
         </div>
       </div>
-    {:else if currentStore.hasSubmittedChoice && currentStore.selectedChoice}
+    {:else if currentStore.hasSubmittedChoice && currentStore.selectedChoice && !$roundResult}
       <div class="selected-choice">
         <h3>Your choice:</h3>
         <div class="choice-display">
@@ -161,9 +161,10 @@
   .game-board {
     width: 100%;
     max-width: 1000px;
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--muted);
     padding: 2rem;
     margin: 0 auto;
   }
@@ -174,13 +175,14 @@
     align-items: center;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid #f0f0f0;
+    border-bottom: 1px solid var(--muted);
   }
 
   .game-info h2 {
     margin: 0 0 0.5rem 0;
-    color: #333;
-    font-size: 1.5rem;
+    color: var(--text-primary);
+    font-size: 1.4rem;
+    letter-spacing: 0.2px;
   }
 
   .game-status {
@@ -188,38 +190,41 @@
   }
 
   .status {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-weight: 500;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    border: 1px solid var(--muted);
+    background: var(--surface-2);
+    font-size: 0.9rem;
   }
 
   .status.your-turn {
-    background: rgba(76, 175, 80, 0.1);
-    color: #4caf50;
+    color: var(--success);
+    border-color: rgba(61, 220, 151, 0.35);
   }
 
   .status.waiting {
-    background: rgba(255, 193, 7, 0.1);
-    color: #ff9800;
+    color: var(--warning);
+    border-color: rgba(246, 192, 73, 0.35);
   }
 
   .status.finished {
-    background: rgba(156, 39, 176, 0.1);
-    color: #9c27b0;
+    color: #c58aff;
+    border-color: rgba(197, 138, 255, 0.35);
   }
 
   .leave-btn {
-    background: #f44336;
-    color: white;
-    border: none;
+    background: var(--surface-2);
+    color: var(--danger);
+    border: 1px solid rgba(255, 107, 107, 0.35);
     padding: 0.5rem 1rem;
-    border-radius: 8px;
+    border-radius: 999px;
     cursor: pointer;
     font-size: 0.9rem;
   }
 
   .leave-btn:hover {
-    background: #d32f2f;
+    background: var(--surface);
   }
 
   .players-section {
@@ -234,14 +239,15 @@
   }
 
   .vs-divider {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #666;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-secondary);
     padding: 1rem;
-    background: #f5f5f5;
+    background: var(--surface-2);
+    border: 1px solid var(--muted);
     border-radius: 50%;
-    width: 60px;
-    height: 60px;
+    width: 56px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -270,8 +276,8 @@
 
   .choices-section h3 {
     margin: 0 0 1.5rem 0;
-    color: #333;
-    font-size: 1.3rem;
+    color: var(--text-primary);
+    font-size: 1.2rem;
   }
 
   .choices-grid {
@@ -282,10 +288,10 @@
   }
 
   .choice-btn {
-    background: white;
-    border: 3px solid #e0e0e0;
-    border-radius: 15px;
-    padding: 1.5rem;
+    background: var(--surface-2);
+    border: 1px solid var(--muted);
+    border-radius: var(--radius-md);
+    padding: 1.3rem;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
@@ -293,17 +299,18 @@
     align-items: center;
     gap: 0.5rem;
     min-width: 120px;
+    color: var(--text-primary);
   }
 
   .choice-btn:hover {
-    border-color: #667eea;
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+    border-color: var(--primary);
+    transform: translateY(-4px);
+    box-shadow: 0 0 0 6px var(--ring);
   }
 
   .choice-btn.selected {
-    border-color: #667eea;
-    background: rgba(102, 126, 234, 0.1);
+    border-color: var(--primary);
+    background: rgba(124, 136, 255, 0.12);
   }
 
   .choice-btn:disabled {
@@ -313,7 +320,7 @@
   }
 
   .choice-emoji {
-    font-size: 3rem;
+    font-size: 2.6rem;
   }
 
   .choice-emoji.large {
@@ -321,9 +328,9 @@
   }
 
   .choice-name {
-    font-size: 1rem;
-    font-weight: 500;
-    color: #333;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-secondary);
   }
 
   .selected-choice {
@@ -333,7 +340,7 @@
 
   .selected-choice h3 {
     margin: 0 0 1rem 0;
-    color: #333;
+    color: var(--text-primary);
   }
 
   .choice-display {
@@ -345,10 +352,10 @@
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
-    padding: 1.5rem;
-    border: 3px solid #667eea;
-    border-radius: 15px;
-    background: rgba(102, 126, 234, 0.1);
+    padding: 1.3rem;
+    border: 1px solid var(--primary);
+    border-radius: var(--radius-md);
+    background: rgba(124, 136, 255, 0.12);
   }
 
   .game-finished {
@@ -365,38 +372,40 @@
   }
 
   .final-result {
-    background: white;
-    border-radius: 20px;
-    padding: 3rem;
+    background: var(--surface);
+    border: 1px solid var(--muted);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
     text-align: center;
-    max-width: 500px;
+    max-width: 520px;
     width: 90%;
+    box-shadow: var(--shadow-1);
   }
 
   .final-result h2 {
     margin: 0 0 1rem 0;
-    color: #333;
+    color: var(--text-primary);
   }
 
   .winner {
-    font-size: 1.5rem;
-    color: #4caf50;
-    font-weight: bold;
-    margin: 0 0 2rem 0;
+    font-size: 1.4rem;
+    color: var(--success);
+    font-weight: 800;
+    margin: 0 0 1.6rem 0;
   }
 
   .loser {
-    font-size: 1.5rem;
-    color: #f44336;
-    font-weight: bold;
-    margin: 0 0 2rem 0;
+    font-size: 1.4rem;
+    color: var(--danger);
+    font-weight: 800;
+    margin: 0 0 1.6rem 0;
   }
 
   .tie {
-    font-size: 1.5rem;
-    color: #ff9800;
-    font-weight: bold;
-    margin: 0 0 2rem 0;
+    font-size: 1.4rem;
+    color: var(--warning);
+    font-weight: 800;
+    margin: 0 0 1.6rem 0;
   }
 
   .final-scores h3 {
@@ -521,36 +530,3 @@
     }
   }
 </style>
-  }
-  .choices {
-    display: flex;
-    justify-content: center;
-    margin: 20px 0;
-  }
-  .choice {
-    margin: 0 10px;
-    cursor: pointer;
-    padding: 10px 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    transition: background-color 0.3s;
-  }
-  .choice:hover {
-    background-color: #f0f0f0;
-  }
-</style>
-
-<div class="game-board">
-  <h1>Stone Paper Scissors</h1>
-  <div class="choices">
-    {#each choices as choice}
-      <div class="choice" on:click={() => makeChoice(choice)}>
-        {choice}
-      </div>
-    {/each}
-  </div>
-  <PlayerCard />
-  {#if gameResult}
-    <GameResult {gameResult} />
-  {/if}
-</div>

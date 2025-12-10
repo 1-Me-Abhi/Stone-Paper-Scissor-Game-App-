@@ -40,24 +40,25 @@
 
 <style>
   .player-card {
-    background: white;
-    border-radius: 15px;
-    padding: 1.5rem;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    border: 3px solid #e0e0e0;
-    transition: all 0.3s ease;
+    background: var(--surface-2);
+    border-radius: var(--radius-md);
+    padding: 1.3rem;
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--muted);
+    transition: all 0.2s ease;
     min-width: 200px;
     text-align: center;
+    color: var(--text-primary);
   }
 
   .player-card.me {
-    border-color: #4caf50;
-    background: linear-gradient(135deg, #e8f5e8 0%, #ffffff 100%);
+    border-color: rgba(61, 220, 151, 0.35);
+    background: linear-gradient(135deg, rgba(61, 220, 151, 0.08) 0%, transparent 100%);
   }
 
   .player-card.opponent {
-    border-color: #2196f3;
-    background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
+    border-color: rgba(124, 136, 255, 0.35);
+    background: linear-gradient(135deg, rgba(124, 136, 255, 0.08) 0%, transparent 100%);
   }
 
   .player-header {
@@ -66,25 +67,26 @@
 
   .player-name {
     margin: 0 0 0.5rem 0;
-    color: #333;
-    font-size: 1.1rem;
-    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
   }
 
   .you-indicator {
     font-size: 0.8rem;
-    color: #4caf50;
-    font-weight: normal;
+    color: var(--success);
+    font-weight: 600;
   }
 
   .player-score {
-    color: #666;
+    color: var(--text-secondary);
     font-size: 0.9rem;
   }
 
   .score-number {
-    font-weight: bold;
-    color: #333;
+    font-weight: 800;
+    color: var(--text-primary);
     font-size: 1.1rem;
   }
 
@@ -105,10 +107,10 @@
   }
 
   .choice-name {
-    font-weight: 500;
-    color: #333;
+    font-weight: 600;
+    color: var(--text-secondary);
     text-transform: capitalize;
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 
   .waiting-choice {
@@ -126,7 +128,7 @@
 
   .waiting-text {
     font-style: italic;
-    color: #666;
+    color: var(--text-secondary);
     font-size: 0.9rem;
   }
 

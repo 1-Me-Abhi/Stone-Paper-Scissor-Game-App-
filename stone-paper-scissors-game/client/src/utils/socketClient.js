@@ -1,7 +1,9 @@
 import { io } from 'socket.io-client';
 import { writable } from 'svelte/store';
 
-const SERVER_URL = 'http://localhost:3001';
+// Use environment variable or fallback to relative URL in production
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 
+                   (import.meta.env.PROD ? window.location.origin : 'http://localhost:3001');
 
 class SocketClient {
   constructor() {

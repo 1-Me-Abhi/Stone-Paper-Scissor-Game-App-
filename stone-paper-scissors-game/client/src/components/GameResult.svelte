@@ -75,14 +75,15 @@
 
 <style>
   .game-result {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 20px;
+    background: var(--surface);
+    color: var(--text-primary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--muted);
     padding: 2rem;
     margin: 1rem 0;
     text-align: center;
-    animation: slideIn 0.5s ease-out;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.4s ease-out;
+    box-shadow: var(--shadow-1);
   }
 
   @keyframes slideIn {
@@ -97,8 +98,8 @@
   }
 
   .game-result h2 {
-    margin: 0 0 1.5rem 0;
-    font-size: 1.5rem;
+    margin: 0 0 1.2rem 0;
+    font-size: 1.3rem;
   }
 
   .choices-comparison {
@@ -125,14 +126,14 @@
   }
 
   .choice-display {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 15px;
+    background: var(--surface-2);
+    border: 1px solid var(--muted);
+    border-radius: var(--radius-md);
     padding: 1rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
-    backdrop-filter: blur(10px);
   }
 
   .choice-emoji {
@@ -146,14 +147,15 @@
   }
 
   .vs-separator {
-    font-size: 1.5rem;
-    font-weight: bold;
-    opacity: 0.8;
+    font-size: 1.1rem;
+    font-weight: 700;
+    opacity: 0.9;
     padding: 1rem;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    width: 60px;
-    height: 60px;
+    background: var(--surface-2);
+    border: 1px solid var(--muted);
+    width: 56px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -164,10 +166,9 @@
   }
 
   .result-text {
-    font-size: 1.3rem;
-    font-weight: bold;
+    font-size: 1.2rem;
+    font-weight: 800;
     margin: 0;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
   }
 
   .current-scores {
@@ -199,9 +200,8 @@
   }
 
   .score-value {
-    font-size: 2rem;
-    font-weight: bold;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    font-size: 1.8rem;
+    font-weight: 800;
   }
 
   @media (max-width: 768px) {

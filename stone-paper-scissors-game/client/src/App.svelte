@@ -58,10 +58,19 @@
 <main class="app">
   <header class="header">
     <h1>🗿📄✂️ Stone Paper Scissors</h1>
-    <div class="connection-status {connectionStatus}">
+    <div class="header-actions">
+      <button class="theme-toggle" on:click={() => {
+        const root = document.documentElement;
+        const isLight = root.getAttribute('data-theme') === 'light';
+        root.setAttribute('data-theme', isLight ? 'dark' : 'light');
+      }}>
+        🌓 Theme
+      </button>
+      <div class="connection-status {connectionStatus}">
       {connectionStatus === 'connected' ? '🟢 Connected' : 
        connectionStatus === 'connecting' ? '🟡 Connecting...' : 
        '🔴 Disconnected'}
+      </div>
     </div>
   </header>
 
@@ -154,10 +163,9 @@
 <style>
   :global(body) {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-    color: #333;
+    background: var(--bg-accent);
+    color: var(--text-primary);
   }
 
   .app {
@@ -167,41 +175,66 @@
   }
 
   .header {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
+    background: linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0)) ;
+    backdrop-filter: blur(12px);
     padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .header h1 {
     margin: 0;
-    color: white;
-    font-size: 1.8rem;
+    color: var(--text-primary);
+    font-size: 1.6rem;
+    letter-spacing: 0.3px;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .theme-toggle {
+    background: var(--surface-2);
+    color: var(--text-primary);
+    border: 1px solid var(--muted);
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 6px var(--ring);
   }
 
   .connection-status {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 500;
+    background: var(--surface-2);
+    border: 1px solid var(--muted);
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
   }
 
   .connection-status.connected {
-    background: rgba(76, 175, 80, 0.2);
-    color: #4caf50;
+    color: var(--success);
+    border-color: rgba(61, 220, 151, 0.35);
   }
 
   .connection-status.connecting {
-    background: rgba(255, 193, 7, 0.2);
-    color: #ffc107;
+    color: var(--warning);
+    border-color: rgba(246, 192, 73, 0.35);
   }
 
   .connection-status.disconnected {
-    background: rgba(244, 67, 54, 0.2);
-    color: #f44336;
+    color: var(--danger);
+    border-color: rgba(255, 107, 107, 0.35);
   }
 
   .container {
@@ -218,45 +251,51 @@
   }
 
   .login-card, .waiting-card {
-    background: white;
-    border-radius: 20px;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
     padding: 2rem;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--muted);
     text-align: center;
   }
 
   .login-card h2, .waiting-card h2 {
     margin: 0 0 1rem 0;
-    color: #333;
+    color: var(--text-primary);
   }
 
   .login-card p, .waiting-card p {
     margin: 0 0 2rem 0;
-    color: #666;
+    color: var(--text-secondary);
   }
 
   .login-card input {
     width: 100%;
-    padding: 1rem;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--muted);
+    background: var(--surface-2);
+    color: var(--text-primary);
+    border-radius: var(--radius-md);
     font-size: 1rem;
     margin-bottom: 1rem;
     box-sizing: border-box;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
   }
 
   .login-card input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 6px var(--ring);
   }
 
   .lobby {
     width: 100%;
-    max-width: 800px;
-    background: white;
-    border-radius: 20px;
+    max-width: 900px;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
     padding: 2rem;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--muted);
   }
 
   .lobby-header {
@@ -266,7 +305,7 @@
 
   .lobby-header h2 {
     margin: 0 0 0.5rem 0;
-    color: #333;
+    color: var(--text-primary);
   }
 
   .lobby-actions {
@@ -278,7 +317,7 @@
 
   .games-list h3 {
     margin: 0 0 1rem 0;
-    color: #333;
+    color: var(--text-primary);
   }
 
   .games-grid {
@@ -288,8 +327,9 @@
   }
 
   .game-card {
-    background: #f5f5f5;
-    border-radius: 10px;
+    background: var(--surface-2);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--muted);
     padding: 1rem;
     display: flex;
     justify-content: space-between;
@@ -303,18 +343,18 @@
   }
 
   .game-id {
-    font-weight: 500;
-    color: #333;
+    font-weight: 600;
+    color: var(--text-primary);
   }
 
   .players-count {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--text-secondary);
   }
 
   .no-games {
     text-align: center;
-    color: #666;
+    color: var(--text-secondary);
     font-style: italic;
   }
 
@@ -322,7 +362,7 @@
     width: 40px;
     height: 40px;
     border: 3px solid #f3f3f3;
-    border-top: 3px solid #667eea;
+    border-top: 3px solid var(--primary);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 1rem auto;
@@ -334,43 +374,47 @@
   }
 
   button {
-    background: #667eea;
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 10px;
+    background: var(--primary);
+    color: var(--text-primary);
+    border: 1px solid transparent;
+    padding: 0.7rem 1.4rem;
+    border-radius: 999px;
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-weight: 500;
+    font-weight: 600;
   }
 
   button:hover {
-    background: #5a67d8;
+    background: var(--primary-700);
     transform: translateY(-2px);
+    box-shadow: 0 0 0 6px var(--ring);
   }
 
   button:disabled {
-    background: #ccc;
+    background: #666b;
+    color: #aaa;
     cursor: not-allowed;
     transform: none;
+    box-shadow: none;
   }
 
   button.secondary {
-    background: #e0e0e0;
-    color: #333;
+    background: var(--surface-2);
+    color: var(--text-primary);
+    border-color: var(--muted);
   }
 
   button.secondary:hover {
-    background: #d0d0d0;
+    background: var(--surface);
   }
 
   .error-message {
-    background: #ffebee;
-    border: 1px solid #ffcdd2;
-    color: #c62828;
+    background: rgba(227, 75, 75, 0.12);
+    border: 1px solid rgba(227, 75, 75, 0.35);
+    color: var(--danger);
     padding: 1rem;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     margin: 1rem 2rem;
     display: flex;
     justify-content: space-between;
@@ -379,7 +423,7 @@
 
   .error-message button {
     background: none;
-    color: #c62828;
+    color: var(--danger);
     border: none;
     font-size: 1.2rem;
     padding: 0;

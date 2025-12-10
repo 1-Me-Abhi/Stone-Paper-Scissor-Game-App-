@@ -3,7 +3,7 @@ import socketClient from '../utils/socketClient.js';
 
 // Game store combining socket client stores with additional game logic
 export const gameStore = writable({
-  currentView: 'lobby', // 'lobby', 'game', 'waiting'
+  currentView: 'login', // 'login', 'lobby', 'game', 'waiting'
   playerName: '',
   isInGame: false,
   selectedChoice: null,
@@ -196,19 +196,32 @@ connected.subscribe(isConnected => {
 
 // Subscribe to game state changes to reset choice state for new rounds
 gameState.subscribe($gameState => {
-  if ($gameState && $gameState.status === 'playing') {
+  if ($gameState) {
     gameStore.update(store => {
-      // If both players have null choices, it's a new round
-      if ((!$gameState.player1.choice && !$gameState.player2?.choice) || 
-          ($gameState.round > 1 && !store.hasSubmittedChoice)) {
-        return {
-          ...store,
-          selectedChoice: null,
-          hasSubmittedChoice: false,
-          showResult: false
-        };
+      let updates = {};
+      
+      // When game starts (both players joined), switch to game view
+      if ($gameState.status === 'playing' && store.currentView === 'waiting') {
+        updates.currentView = 'game';
       }
-      return store;
+      
+      // Reset choices for new rounds
+      if ($gameState.status === 'playing') {
+        // If both players have null choices, it's a new round
+        if ((!$gameState.player1.choice && !$gameState.player2?.choice) || 
+            ($gameState.round > 1 && !store.hasSubmittedChoice)) {
+          updates.selectedChoice = null;
+          updates.hasSubmittedChoice = false;
+          updates.showResult = false;
+        }
+      }
+      
+      // If game is waiting for players, ensure we're in waiting view
+      if ($gameState.status === 'waiting' && store.isInGame) {
+        updates.currentView = 'waiting';
+      }
+      
+      return Object.keys(updates).length > 0 ? { ...store, ...updates } : store;
     });
   }
 });
@@ -217,5 +230,13 @@ gameState.subscribe($gameState => {
 roundResult.subscribe($roundResult => {
   if ($roundResult) {
     gameStore.update(store => ({ ...store, showResult: true }));
+  } else {
+    // When round result is cleared, reset choices for next round
+    gameStore.update(store => ({ 
+      ...store, 
+      showResult: false,
+      selectedChoice: null,
+      hasSubmittedChoice: false
+    }));
   }
 });

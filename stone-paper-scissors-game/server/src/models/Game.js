@@ -1,9 +1,10 @@
 class Game {
-  constructor(id, player1Id, player1Name) {
+  constructor(id, player1Id, player1Name, player1Avatar = '🎮') {
     this.id = id;
     this.player1 = {
       id: player1Id,
       name: player1Name,
+      avatar: player1Avatar,
       choice: null,
       score: 0
     };
@@ -14,9 +15,11 @@ class Game {
     this.winner = null;
     this.roundWinner = null;
     this.createdAt = new Date();
+    this.finishedAt = null;
+    this.moveHistory = []; // Track all moves in the game
   }
 
-  addPlayer2(player2Id, player2Name) {
+  addPlayer2(player2Id, player2Name, player2Avatar = '🎮') {
     if (this.player2) {
       throw new Error('Game is already full');
     }
@@ -24,6 +27,7 @@ class Game {
     this.player2 = {
       id: player2Id,
       name: player2Name,
+      avatar: player2Avatar,
       choice: null,
       score: 0
     };
@@ -57,6 +61,14 @@ class Game {
   determineRoundWinner() {
     const p1Choice = this.player1.choice;
     const p2Choice = this.player2.choice;
+
+    // Record this round in history
+    this.moveHistory.push({
+      round: this.round,
+      player1Choice: p1Choice,
+      player2Choice: p2Choice,
+      timestamp: new Date()
+    });
 
     if (p1Choice === p2Choice) {
       this.roundWinner = 'tie';
@@ -92,6 +104,7 @@ class Game {
       this.winner = 'tie';
     }
     this.status = 'finished';
+    this.finishedAt = new Date();
   }
 
   nextRound() {
@@ -118,12 +131,14 @@ class Game {
       player1: {
         id: this.player1.id,
         name: this.player1.name,
+        avatar: this.player1.avatar,
         choice: this.player1.choice,
         score: this.player1.score
       },
       player2: this.player2 ? {
         id: this.player2.id,
         name: this.player2.name,
+        avatar: this.player2.avatar,
         choice: this.player2.choice,
         score: this.player2.score
       } : null,
@@ -132,6 +147,33 @@ class Game {
       maxRounds: this.maxRounds,
       winner: this.winner,
       roundWinner: this.roundWinner
+    };
+  }
+
+  getGameHistory() {
+    const duration = this.finishedAt 
+      ? Math.floor((this.finishedAt - this.createdAt) / 1000) 
+      : null;
+    
+    return {
+      id: this.id,
+      player1: {
+        id: this.player1.id,
+        name: this.player1.name,
+        avatar: this.player1.avatar,
+        score: this.player1.score
+      },
+      player2: this.player2 ? {
+        id: this.player2.id,
+        name: this.player2.name,
+        avatar: this.player2.avatar,
+        score: this.player2.score
+      } : null,
+      winner: this.winner,
+      moveHistory: this.moveHistory,
+      createdAt: this.createdAt,
+      finishedAt: this.finishedAt,
+      duration: duration
     };
   }
 
