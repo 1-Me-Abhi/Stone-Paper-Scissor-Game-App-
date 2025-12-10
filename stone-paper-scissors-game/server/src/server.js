@@ -18,6 +18,7 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.static(path.join(__dirname, '../../client/dist')));
 
 // CORS middleware for REST API
@@ -48,20 +49,39 @@ app.get('/api/games', (req, res) => {
   res.json({ message: 'Game API is working' });
 });
 
+// Favicon route to prevent 500 errors
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
+
 // Initialize socket handling
 new SocketHandler(io);
 
 // Serve the client app for any non-API routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
+  // Skip favicon requests
+  if (req.path === '/favicon.ico') {
+    return res.status(204).end();
+  }
+  
+  // Serve index.html for all other routes
+  const indexPath = path.join(__dirname, '../public/index.html');
+  if (require('fs').existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).json({ 
+      error: 'Game client not found', 
+      message: 'Please make sure the client is built and available' 
+    });
+  }
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Server error:', err.stack);
   res.status(500).json({ 
     error: 'Something went wrong!', 
-    message: err.message 
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
   });
 });
 
